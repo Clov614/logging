@@ -1,5 +1,7 @@
 # logging
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/Clov614/logging.svg)](https://pkg.go.dev/github.com/Clov614/logging)
+
 一个基于 zerolog 的 Go 日志库，提供灵活的配置选项，包括文件输出、日志轮转和自定义字段。
 
 ## 特性
