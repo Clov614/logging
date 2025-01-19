@@ -61,15 +61,15 @@ go get github.com/Clov614/logging
     logging.Fatal("致命错误", 1, map[string]interface{}{"reason": "critical error"})
     ```
 
-3. **创建自定义 Logger**:
+3. **设置全局日志字段**:
 
-    你可以基于 `log.Logger` 创建一个新的 `Logger` 实例，并添加自定义字段。
+    使用 `logging.SetField()` 函数可以设置全局日志的字段。之后所有的日志记录都会包含这些字段。
 
     ```golang
-    myLogger := logging.NewLogger(map[string]interface{}{
+    logging.SetField(map[string]interface{}{
         "component": "main",
     })
-    myLogger.Info().Msg("This is a log message from myLogger.")
+    logging.Info().Msg("This log message will contain the 'component' field.")
     ```
 
 4. **关闭日志**:
@@ -126,11 +126,11 @@ func main() {
 
     logging.Debug("进入调试模式", map[string]interface{}{"debug_level": 2})
 
-    // 使用自定义字段创建新的 Logger
-    myLogger := logging.NewLogger(map[string]interface{}{
+    // 设置全局字段
+    logging.SetField(map[string]interface{}{
         "component": "api",
     })
-    myLogger.Info().Msg("API 请求成功")
+    logging.Info().Msg("API 请求成功")
 
     // ... other code ...
 }
@@ -192,11 +192,11 @@ func main() {
 
 	logging.Info("This is project A.")
 
-	// 使用自定义字段创建新的 Logger
-	projectALogger := logging.NewLogger(map[string]interface{}{
+	// 设置全局字段
+	logging.SetField(map[string]interface{}{
 		"module": "projectA",
 	})
-	projectALogger.Info().Msg("This is a log message from projectA's logger.")
+	logging.Info("This is a log message from projectA.")
 }
 ```
 
@@ -230,14 +230,11 @@ func main() {
 
 	logging.Info("This is project B.")
 
-	// 调用 projectA 的函数
-	// projectA.main()
-
-	// 使用自定义字段创建新的 Logger
-	projectBLogger := logging.NewLogger(map[string]interface{}{
+	// 设置全局字段
+	logging.SetField(map[string]interface{}{
 		"module": "projectB",
 	})
-	projectBLogger.Info().Msg("This is a log message from projectB's logger.")
+	logging.Info("This is a log message from projectB.")
 }
 ```
 
@@ -249,21 +246,21 @@ func main() {
 
 ```text
 {"level":"info","sdk":"projectA","projectA":"projectA","time":"2024-07-19 15:30:00","message":"This is project A."}
-{"level":"info","sdk":"projectA","projectA":"projectA","module":"projectA","time":"2024-07-19 15:30:00","message":"This is a log message from projectA's logger."}
+{"level":"info","sdk":"projectA","projectA":"projectA","module":"projectA","time":"2024-07-19 15:30:00","message":"This is a log message from projectA."}
 ```
 
 **projectB.log:**
 
 ```text
 {"level":"info","sdk":"projectB","projectB":"projectB","time":"2024-07-19 15:30:00","message":"This is project B."}
-{"level":"info","sdk":"projectB","projectB":"projectB","module":"projectB","time":"2024-07-19 15:30:00","message":"This is a log message from projectB's logger."}
+{"level":"info","sdk":"projectB","projectB":"projectB","module":"projectB","time":"2024-07-19 15:30:00","message":"This is a log message from projectB."}
 ```
 
 **说明:**
 
 *   每个项目都有自己的 `init()` 函数，用于初始化 `logging` 包，并配置不同的日志文件路径、项目名称和项目唯一标识。
 *   `projectB` 不再调用 `projectA` 的 `main()` 函数，只负责记录自己的日志。
-*   每个项目都可以使用 `logging.Info()` 记录日志，也可以使用 `logging.NewLogger()` 创建带有自定义字段的 `Logger` 实例。
+*   每个项目都可以使用 `logging.Info()` 记录日志，也可以使用 `logging.SetField()` 设置全局日志字段。
 *   运行 `projectA` 和 `projectB` 会分别生成各自的日志文件。
 
 这个示例展示了如何在多个相互依赖的项目中使用 `logging` 包，并保持各自的日志配置和输出。每个项目都可以独立配置日志记录器，并记录到不同的日志文件中。

@@ -79,11 +79,11 @@ func InitLogger(config Config) {
 	}
 }
 
-// NewLogger 基于 log.Logger 创建一个新的 Logger 实例
-func NewLogger(fields map[string]interface{}) *zerolog.Logger {
+// SetField 设置字段信息k-v
+func SetField(fields map[string]interface{}) {
 	// 直接使用 log.Logger
 	tmpLogger := log.With().Fields(fields).Logger()
-	return &tmpLogger
+	log.Logger = tmpLogger // 设置
 }
 
 // monitorLogSize 监控日志文件大小并在超过限制时清除日志文件

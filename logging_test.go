@@ -1,8 +1,11 @@
 package logging
 
 import (
+	"os"
 	"testing"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 func TestInitLoggerAndUsage(t *testing.T) {
@@ -26,14 +29,54 @@ func TestInitLoggerAndUsage(t *testing.T) {
 	Debug("This is a debug message.")
 	Warn("This is a warning message.")
 
-	// 使用 NewLogger 创建一个新的 Logger 实例并记录日志
+	// 使用 SetField 设置全局字段并记录日志
 	fields := map[string]interface{}{
 		"user": "testuser",
 		"id":   123,
 	}
-	logger := NewLogger(fields)
-	logger.Info().Msg("This is a message from a new logger.")
+	SetField(fields)
+	Info("This is a message with global fields.")
 
 	// 关闭日志记录器
 	Close()
+
+	// 验证日志文件是否存在
+	if _, err := os.Stat("./test.log"); os.IsNotExist(err) {
+		t.Errorf("Log file was not created: %v", err)
+	}
+
+	// 清理测试日志文件
+	os.Remove("./test.log")
+}
+
+func TestLogBuffer(t *testing.T) {
+	// 创建一个 LogBuffer 实例, 默认不激活以直接输出日志
+	buf := NewLogBuffer()
+
+	// 添加一些日志条目到缓冲区
+	buf.AddEntry(LogEntry{
+		Level:   zerolog.InfoLevel,
+		Message: "This is an info message.",
+		Fields:  nil})
+
+	buf.AddEntry(LogEntry{
+		Level:   zerolog.ErrorLevel,
+		Message: "This is an error message in buffer.",
+		Fields:  nil})
+	buf.AddEntry(LogEntry{
+		Level:   zerolog.DebugLevel,
+		Message: "This is a debug message in buffer.",
+		Fields:  nil})
+	// 刷新缓冲区，输出日志
+	buf.Flush(zerolog.InfoLevel)
+
+	// 激活缓冲区
+	buf.SetActive(true)
+	buf.AddEntry(LogEntry{
+		Level:   zerolog.InfoLevel,
+		Message: "This is another info message in buffer.",
+		Fields:  nil})
+
+	// 再次刷新缓冲区, 输出所有 >= InfoLevel 的日志
+	buf.Flush(zerolog.InfoLevel)
 }
