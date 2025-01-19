@@ -16,19 +16,24 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	defaultProjectKey = "project"
+)
+
 var (
 	logfile      *os.File
 	once         sync.Once
-	baseLogger   *zerolog.Logger
-	logPath      string       // 日志文件路径
-	projectName  string       // 项目名称
-	maxLogSize   int64        // 最大日志文件大小
-	monitorTimer *time.Ticker // 日志大小监控计时器
+	logPath      string              // 日志文件路径
+	ProjectKey   = defaultProjectKey // 项目唯一标识
+	projectName  string              // 项目名称
+	maxLogSize   int64               // 最大日志文件大小
+	monitorTimer *time.Ticker        // 日志大小监控计时器
 )
 
 // Config 用于配置日志记录器
 type Config struct {
 	LogPath             string        // 日志文件路径
+	ProjectKey          string        // 项目唯一标识
 	ProjectName         string        // 项目名称
 	MaxLogSize          int64         // 最大日志文件大小 (字节)
 	MonitorInterval     time.Duration // 监控日志大小的间隔时间
@@ -39,6 +44,7 @@ type Config struct {
 // InitLogger 初始化日志记录器
 func InitLogger(config Config) {
 	logPath = config.LogPath
+	ProjectKey = config.ProjectKey
 	projectName = config.ProjectName
 	maxLogSize = config.MaxLogSize
 
@@ -64,14 +70,8 @@ func InitLogger(config Config) {
 	}
 
 	multi := zerolog.MultiLevelWriter(writers...)
-	if baseLogger == nil {
-		tmpLogger := zerolog.New(multi).With().Timestamp().Str("sdk", projectName).Logger()
-		baseLogger = &tmpLogger
-		log.Logger = *baseLogger
-	} else {
-		*baseLogger = baseLogger.Output(multi).With().Timestamp().Str("sdk", projectName).Logger()
-		log.Logger = *baseLogger
-	}
+	// 直接使用 log.Logger 作为基础日志记录器，并设置输出、时间戳和项目名称字段
+	log.Logger = log.Output(multi).With().Timestamp().Str(ProjectKey, projectName).Logger()
 
 	if config.EnableFileOutput && config.MonitorInterval > 0 {
 		monitorTimer = time.NewTicker(config.MonitorInterval)
@@ -79,9 +79,10 @@ func InitLogger(config Config) {
 	}
 }
 
-// NewLogger 基于 baseLogger 创建一个新的 Logger 实例
+// NewLogger 基于 log.Logger 创建一个新的 Logger 实例
 func NewLogger(fields map[string]interface{}) *zerolog.Logger {
-	tmpLogger := baseLogger.With().Fields(fields).Logger()
+	// 直接使用 log.Logger
+	tmpLogger := log.With().Fields(fields).Logger()
 	return &tmpLogger
 }
 
@@ -128,9 +129,8 @@ func clearLogFile() {
 		writers = append(writers, logfile)
 	}
 	multi := zerolog.MultiLevelWriter(writers...)
-	tmpLogger := zerolog.New(multi).With().Timestamp().Str("sdk", projectName).Logger()
-	baseLogger = &tmpLogger
-	log.Logger = *baseLogger
+	// 直接更新 log.Logger 的输出
+	log.Logger = log.Output(multi).With().Timestamp().Str("sdk", projectName).Logger()
 
 	log.Info().Msg("Log file cleared successfully.")
 }
@@ -300,7 +300,9 @@ func (lb *LogBuffer) SetActive(active bool) {
 
 func init() {
 	// 初始化一个默认的 Logger
-	tmpLogger := zerolog.New(os.Stderr).With().Timestamp().Str("sdk", "default").Logger()
-	baseLogger = &tmpLogger
-	log.Logger = *baseLogger
+	zerolog.TimeFieldFormat = "2006-01-02 15:04:05"
+	zerolog.MultiLevelWriter(zerolog.ConsoleWriter{Out: os.Stderr})
+	multi := zerolog.MultiLevelWriter(zerolog.ConsoleWriter{Out: os.Stderr})
+
+	log.Logger = log.Output(multi).With().Timestamp().Logger()
 }

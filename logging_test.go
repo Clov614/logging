@@ -9,6 +9,7 @@ func TestInitLoggerAndUsage(t *testing.T) {
 	// 定义一个简单的配置
 	config := Config{
 		LogPath:             "./test.log",
+		ProjectKey:          "project_key",
 		ProjectName:         "testProject",
 		MaxLogSize:          1024 * 1024, // 1MB
 		MonitorInterval:     5 * time.Second,
