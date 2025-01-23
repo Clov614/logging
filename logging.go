@@ -221,8 +221,8 @@ func Fatal(msg string, exitCode int, fields ...map[string]interface{}) {
 			event = event.Interface(k, v)
 		}
 	}
-	os.Exit(exitCode)
 	event.Msg(msg)
+	os.Exit(exitCode)
 }
 
 func validLogPath(path string, isCreate bool) (bool, error) {

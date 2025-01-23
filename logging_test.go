@@ -80,3 +80,25 @@ func TestLogBuffer(t *testing.T) {
 	// 再次刷新缓冲区, 输出所有 >= InfoLevel 的日志
 	buf.Flush(zerolog.InfoLevel)
 }
+
+func TestFatal(t *testing.T) {
+	// 定义一个简单的配置
+	config := Config{
+		LogPath:             "./test.log",
+		ProjectKey:          "project_key",
+		ProjectName:         "testProject",
+		MaxLogSize:          1024 * 1024, // 1MB
+		MonitorInterval:     5 * time.Second,
+		EnableConsoleOutput: true,
+		EnableFileOutput:    true,
+	}
+
+	// 初始化日志记录器
+	InitLogger(config)
+	// 清理测试日志文件
+	defer os.Remove("./test.log")
+
+	// 使用日志记录器记录一些信息
+	Fatal("test fatal", 123)
+
+}
