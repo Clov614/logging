@@ -39,6 +39,7 @@ type Config struct {
 	MonitorInterval     time.Duration // 监控日志大小的间隔时间
 	EnableConsoleOutput bool          // 是否启用控制台输出
 	EnableFileOutput    bool          // 是否启用文件输出
+	LogLevel            string        // 日志级别
 }
 
 // InitLogger 初始化日志记录器
@@ -73,6 +74,16 @@ func InitLogger(config Config) {
 	// 直接使用 log.Logger 作为基础日志记录器，并设置输出、时间戳和项目名称字段
 	log.Logger = log.Output(multi).With().Timestamp().Str(ProjectKey, projectName).Logger()
 
+	// 设置日志级别
+	if config.LogLevel != "" { // 只有当配置中LogLevel不为空时才尝试设置，避免覆盖 SetLogLevel 的设置
+		level, err := zerolog.ParseLevel(config.LogLevel)
+		if err != nil {
+			log.Warn().Msgf("Failed to parse log level '%s', using default level: Info", config.LogLevel)
+		} else {
+			zerolog.SetGlobalLevel(level)
+			log.Info().Msgf("Log level set to %s from config", level.String())
+		}
+	}
 	if config.EnableFileOutput && config.MonitorInterval > 0 {
 		monitorTimer = time.NewTicker(config.MonitorInterval)
 		go monitorLogSize(monitorTimer.C)
@@ -296,6 +307,17 @@ func (lb *LogBuffer) SetActive(active bool) {
 	lb.mu.Lock()
 	defer lb.mu.Unlock()
 	lb.active = active
+}
+
+// SetLogLevel  动态设置日志级别
+func SetLogLevel(levelStr string) {
+	level, err := zerolog.ParseLevel(levelStr)
+	if err != nil {
+		log.Warn().Msgf("Failed to parse log level '%s', log level remains unchanged", levelStr)
+		return
+	}
+	zerolog.SetGlobalLevel(level)
+	log.Info().Msgf("Log level dynamically set to %s", level.String())
 }
 
 func init() {
